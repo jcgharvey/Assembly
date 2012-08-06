@@ -11,35 +11,23 @@
 #include <pthread.h>
 
 #define TICKETS 100000000
-#define NUMTHREADS 8
+#define NUMTHREADS 16
 
 int ticket = -1;
 int usedTickets[TICKETS];
 int lockValue = 0;
+
+pthread_mutex_t mutex;
 // all threads try to get some of the tickets
 
 void *lock(void)
 {
-    asm ("Loop: ;"
-                "movl $1, %%eax ;"
-                "xchg %%eax, %0 ;"
-                "test %%eax, %%eax ;"
-                "jnz Loop ;"
-            : 
-            : "m" (lockValue)
-            : "%eax"
-        );
+    pthread_mutex_lock(&mutex);
 }
 
 void *unlock(void)
 {
-    asm("movl $0, %%eax ;"
-            "xchg %%eax, %0 ;"
-            "test %%eax, %%eax ;"
-            : 
-            : "m" (lockValue)
-            : "%eax"
-        );
+    pthread_mutex_unlock(&mutex);   
 }
 
 void *grabATicket(void *unused) {
@@ -59,6 +47,7 @@ void *grabATicket(void *unused) {
 }
 
 int main(void) {
+    pthread_mutex_init(&mutex, NULL);
     pthread_t threads[NUMTHREADS];
     pthread_t thread1, thread2;
     int i;
@@ -67,5 +56,6 @@ int main(void) {
     for (i = 0; i < NUMTHREADS; i++)
         pthread_join(threads[i], NULL);
     printf("The number of tickets grabbed = %d\n", ticket + 1);
+    pthread_mutex_destroy(&mutex);
     return EXIT_SUCCESS;
 }

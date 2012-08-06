@@ -24,6 +24,7 @@ void *lock(void)
                 "movl $1, %%eax ;"
                 "xchg %%eax, %0 ;"
                 "test %%eax, %%eax ;"
+                "pause;"
                 "jnz Loop ;"
             : 
             : "m" (lockValue)
